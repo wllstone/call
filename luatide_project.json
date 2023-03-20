@@ -1,0 +1,22 @@
+{
+	"version": "2.6",
+	"projectName": "call",
+	"projectType": "example",
+	"corePath": "c:\\Users\\wstone\\AppData\\Roaming\\LuatIDE\\LuatideCore\\Air72XUX_CORE\\LuatOS-Air_V4018_RDA8910_TTS_NOLVGL_FLOAT.pac",
+	"libPath": "c:\\Users\\wstone\\AppData\\Roaming\\LuatIDE\\LuatideLib\\Air72XUX_LIB\\V2.4.3\\lib",
+	"moduleModel": "air72XUX/air82XUX",
+	"appFile": [
+		"call.lua",
+		"call.mp3",
+		"config.lua",
+		"key.lua",
+		"luatide_project.json",
+		"main.lua",
+		"smsLogic.lua",
+		"testCall.lua",
+		"tip.amr"
+	],
+	"modulePort": "",
+	"ignore": [],
+	"simulatorRun": "disable"
+}
