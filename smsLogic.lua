@@ -7,6 +7,7 @@
 
 module(...,package.seeall)
 require"sms"
+require"pb"
 
 local function procnewsms(num,data,datetime)
     -- 当收到新短信时，打印短信发送方的手机号、短信内容和时间

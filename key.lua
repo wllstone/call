@@ -1,5 +1,8 @@
 
 module(...,package.seeall)
+require"pb"
+require"cc"
+require"audio"
 
 local keyName = {
     [0] = {
@@ -31,18 +34,20 @@ local function keyMsg(msg)
         msg.pressed
     )
 
-    if keyName[msg.key_matrix_row][msg.key_matrix_col] == "USER1" then
-        sys.publish("KEY_USER1", msg.pressed)
-    elseif keyName[msg.key_matrix_row][msg.key_matrix_col] == "USER2" then
-        sys.publish("KEY_USER2", msg.pressed)
-    elseif keyName[msg.key_matrix_row][msg.key_matrix_col] == "USER3" then
-        sys.publish("KEY_USER3", msg.pressed)
-    elseif keyName[msg.key_matrix_row][msg.key_matrix_col] == "USER4" then
-        sys.publish("KEY_USER4", msg.pressed)
-    elseif keyName[msg.key_matrix_row][msg.key_matrix_col] == "SOS" then
-        sys.publish("KEY_SOS", msg.pressed)
-    elseif keyName[msg.key_matrix_row][msg.key_matrix_col] == "EXIT" then
-        sys.publish("KEY_EXIT", msg.pressed)
+    if not msg.pressed then
+        if keyName[msg.key_matrix_row][msg.key_matrix_col] == "USER1" then
+            sys.publish("KEY_USER1")
+        elseif keyName[msg.key_matrix_row][msg.key_matrix_col] == "USER2" then
+            sys.publish("KEY_USER2")
+        elseif keyName[msg.key_matrix_row][msg.key_matrix_col] == "USER3" then
+            sys.publish("KEY_USER3")
+        elseif keyName[msg.key_matrix_row][msg.key_matrix_col] == "USER4" then
+            sys.publish("KEY_USER4")
+        elseif keyName[msg.key_matrix_row][msg.key_matrix_col] == "SOS" then
+            sys.publish("KEY_SOS")
+        elseif keyName[msg.key_matrix_row][msg.key_matrix_col] == "EXIT" then
+            sys.publish("KEY_EXIT")
+        end
     end
 end
 
@@ -57,7 +62,16 @@ sys.subscribe("KEY_USER2", call(2))
 sys.subscribe("KEY_USER3", call(3))
 sys.subscribe("KEY_USER4", call(4))
 sys.subscribe("KEY_SOS", sos())
-sys.subscribe("KEY_EXIT", sos())
+sys.subscribe("KEY_EXIT", hangUp())
+
+-- 判断是拨打还是接听
+local function user(id)
+    if config.getPhoneRing then
+        audio.stop(function() cc.accept(config.getNumber) end)
+    else
+        call(id)
+    end
+end
 
 -- 读取电话本，拨打电话
 local function call(id)
@@ -65,20 +79,25 @@ local function call(id)
         log.info("test","电话本:",result,name,number)
         -- 判空？
         cc.dial(number)
-        call.callStatus = CALL
-        call.callNumber = number
+        config.phoneCall(number)
     end)
 end
 
 -- S0S
 local function sos()
-    sosStatus = RUN
+    config.sosRun()
     for i=1,4 do
-        if sosStatus == RUN then
+        if config.getSos then
             log.info("test", "sos", "拨打联系人：", i)
             call(i)
         end
     end
+end
+
+-- 挂断
+local function hangUp()
+    log.info("test", "挂断")
+    cc.hangUp(config.getNumber)
 end
 
 --关机键长按关机
