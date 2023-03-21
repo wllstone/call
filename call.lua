@@ -9,6 +9,7 @@ module(...,package.seeall)
 require"cc"
 require"audio"
 require"common"
+require"config"
 
 --来电铃声播放协程ID
 local coIncoming
@@ -22,8 +23,7 @@ local function connected(num)
     coIncoming = nil
     --通话中设置mic增益，必须在通话建立以后设置
     audio.setMicGain("call",7)
-    callNumber = num
-    callStatus = CALL
+    config.phoneCall(num)
 end
 
 --- “通话已结束”消息处理函数
@@ -36,7 +36,8 @@ end
 -- @return 无
 local function disconnected(discReason)
     coIncoming = nil
-    callStatus = NOTCALL
+    config.phoneNotCall()
+    config.sosStop()
     log.info("testCall.disconnected",discReason)
     sys.timerStopAll(cc.hangUp)
     audio.stop()
@@ -49,8 +50,7 @@ local function incoming(num)
     log.info("testCall.incoming:"..num)
 
     if not coIncoming then
-        callStatus = RING
-        callNumber = num
+        config.phoneRing(num)
         coIncoming = sys.taskInit(function()
             while true do
                 log.info("test", "响铃声")
@@ -68,7 +68,6 @@ end
 local function ready()
     log.info("testCall.ready")
     audio.play(1,"TTS","准备就绪",4)
-    pb.read(1,readcb)
 end
 
 --- “通话中收到对方的DTMF”消息处理函数
@@ -78,23 +77,9 @@ local function dtmfDetected(dtmf)
     log.info("testCall.dtmfDetected",dtmf)
 end
 
--- 读取电话本
-function readcb(result,name,number)
-    log.info("test","电话本:",result,name,number)
-end
-
 
 --订阅消息的用户回调函数
-audio.play(1,"TTS","启动成功",2)
-result = cc.anyCallExist()
-log.info("test", "通话查询:", result)
-state = cc.getState('10086')
-log.info("test", "通话状态:", state)
-
 audio.setChannel(2)
-require"pb"
-log.info("test", "测试结束")
-
 -- sys.subscribe("CALL_READY",ready)
 sys.subscribe("NET_STATE_REGISTERED",ready)
 sys.subscribe("CALL_INCOMING",incoming)
@@ -102,29 +87,4 @@ sys.subscribe("CALL_CONNECTED",connected)
 sys.subscribe("CALL_DISCONNECTED",disconnected)
 cc.dtmfDetect(true)
 sys.subscribe("CALL_DTMF_DETECT",dtmfDetected)
-
-sys.subscribe("POWER_KEY_IND_LONG",function()
-    log.info("test", "按键！")
-    if callStatus == 0 then
-        cc.dial(14780136998)
-    end
-end)
-
-sys.subscribe("POWER_KEY_IND",function()
-    if callStatus == NOTCALL then
-        log.info("test", "打电话")
-        -- num = 14780136998
-        cc.dial(14780136998)
-        callStatus = CALL
-        callNumber = 14780136998
-    elseif callStatus == RING then
-        log.info("test", "接听")
-        audio.stop(function() cc.accept(callNumber) end)
-    elseif callStatus == CALL then
-        log.info("test", "挂断")
-        cc.hangUp(callNumber)
-        callNumber = nil
-    end
-end)
-
 
